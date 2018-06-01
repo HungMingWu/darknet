@@ -89,7 +89,6 @@ void update_rnn_layer(layer l, update_args a)
 void forward_rnn_layer(layer l, network net)
 {
     network s = net;
-    s.train = net.train;
     int i;
     layer input_layer = *(l.input_layer);
     layer self_layer = *(l.self_layer);
@@ -98,7 +97,6 @@ void forward_rnn_layer(layer l, network net)
     fill_cpu(l.outputs * l.batch * l.steps, 0, output_layer.delta, 1);
     fill_cpu(l.outputs * l.batch * l.steps, 0, self_layer.delta, 1);
     fill_cpu(l.outputs * l.batch * l.steps, 0, input_layer.delta, 1);
-    if(net.train) fill_cpu(l.outputs * l.batch, 0, l.state, 1);
 
     for (i = 0; i < l.steps; ++i) {
         s.input = net.input;
@@ -108,7 +106,6 @@ void forward_rnn_layer(layer l, network net)
         forward_connected_layer(self_layer, s);
 
         float *old_state = l.state;
-        if(net.train) l.state += l.outputs*l.batch;
         if(l.shortcut){
             copy_cpu(l.outputs * l.batch, old_state, 1, l.state, 1);
         }else{
@@ -130,7 +127,6 @@ void forward_rnn_layer(layer l, network net)
 void backward_rnn_layer(layer l, network net)
 {
     network s = net;
-    s.train = net.train;
     int i;
     layer input_layer = *(l.input_layer);
     layer self_layer = *(l.self_layer);

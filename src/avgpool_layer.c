@@ -30,13 +30,6 @@ avgpool_layer make_avgpool_layer(int batch, int w, int h, int c)
     return l;
 }
 
-void resize_avgpool_layer(avgpool_layer *l, int w, int h)
-{
-    l->w = w;
-    l->h = h;
-    l->inputs = h*w*l->c;
-}
-
 void forward_avgpool_layer(const avgpool_layer l, network net)
 {
     int b,i,k;

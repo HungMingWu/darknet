@@ -55,39 +55,6 @@ layer make_reorg_layer(int batch, int w, int h, int c, int stride, int reverse, 
     return l;
 }
 
-void resize_reorg_layer(layer *l, int w, int h)
-{
-    int stride = l->stride;
-    int c = l->c;
-
-    l->h = h;
-    l->w = w;
-
-    if(l->reverse){
-        l->out_w = w*stride;
-        l->out_h = h*stride;
-        l->out_c = c/(stride*stride);
-    }else{
-        l->out_w = w/stride;
-        l->out_h = h/stride;
-        l->out_c = c*(stride*stride);
-    }
-
-    l->outputs = l->out_h * l->out_w * l->out_c;
-    l->inputs = l->outputs;
-    int output_size = l->outputs * l->batch;
-
-    l->output = realloc(l->output, output_size * sizeof(float));
-    l->delta = realloc(l->delta, output_size * sizeof(float));
-
-#ifdef GPU
-    cuda_free(l->output_gpu);
-    cuda_free(l->delta_gpu);
-    l->output_gpu  = cuda_make_array(l->output, output_size);
-    l->delta_gpu   = cuda_make_array(l->delta,  output_size);
-#endif
-}
-
 void forward_reorg_layer(const layer l, network net)
 {
     int i;

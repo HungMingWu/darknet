@@ -128,7 +128,6 @@ void update_gru_layer(layer l, update_args a)
 void forward_gru_layer(layer l, network net)
 {
     network s = net;
-    s.train = net.train;
     int i;
     layer uz = *(l.uz);
     layer ur = *(l.ur);
@@ -145,10 +144,6 @@ void forward_gru_layer(layer l, network net)
     fill_cpu(l.outputs * l.batch * l.steps, 0, wz.delta, 1);
     fill_cpu(l.outputs * l.batch * l.steps, 0, wr.delta, 1);
     fill_cpu(l.outputs * l.batch * l.steps, 0, wh.delta, 1);
-    if(net.train) {
-        fill_cpu(l.outputs * l.batch * l.steps, 0, l.delta, 1);
-        copy_cpu(l.outputs*l.batch, l.state, 1, l.prev_state, 1);
-    }
 
     for (i = 0; i < l.steps; ++i) {
         s.input = l.state;

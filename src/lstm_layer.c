@@ -156,7 +156,6 @@ void update_lstm_layer(layer l, update_args a)
 void forward_lstm_layer(layer l, network state)
 {
     network s = { 0 };
-    s.train = state.train;
     int i;
     layer wf = *(l.wf);
     layer wi = *(l.wi);
@@ -177,9 +176,6 @@ void forward_lstm_layer(layer l, network state)
     fill_cpu(l.outputs * l.batch * l.steps, 0, ui.delta, 1);
     fill_cpu(l.outputs * l.batch * l.steps, 0, ug.delta, 1);
     fill_cpu(l.outputs * l.batch * l.steps, 0, uo.delta, 1);
-    if (state.train) {
-        fill_cpu(l.outputs * l.batch * l.steps, 0, l.delta, 1);
-    }
 
     for (i = 0; i < l.steps; ++i) {
         s.input = l.h_cpu;
@@ -242,7 +238,6 @@ void forward_lstm_layer(layer l, network state)
 void backward_lstm_layer(layer l, network state)
 {
     network s = { 0 };
-    s.train = state.train;
     int i;
     layer wf = *(l.wf);
     layer wi = *(l.wi);
@@ -398,7 +393,6 @@ void update_lstm_layer_gpu(layer l, update_args a)
 void forward_lstm_layer_gpu(layer l, network state)
 {
     network s = { 0 };
-    s.train = state.train;
     int i;
     layer wf = *(l.wf);
     layer wi = *(l.wi);
