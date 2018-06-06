@@ -1,5 +1,4 @@
 #include "maxpool_layer.h"
-#include "cuda.h"
 #include <stdio.h>
 
 maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int stride, int padding)
@@ -23,14 +22,6 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
     l.output =  calloc(output_size, sizeof(float));
     l.delta =   calloc(output_size, sizeof(float));
     l.forward = forward_maxpool_layer;
-    l.backward = backward_maxpool_layer;
-    #ifdef GPU
-    l.forward_gpu = forward_maxpool_layer_gpu;
-    l.backward_gpu = backward_maxpool_layer_gpu;
-    l.indexes_gpu = cuda_make_int_array(0, output_size);
-    l.output_gpu  = cuda_make_array(l.output, output_size);
-    l.delta_gpu   = cuda_make_array(l.delta, output_size);
-    #endif
     fprintf(stderr, "max          %d x %d / %d  %4d x%4d x%4d   ->  %4d x%4d x%4d\n", size, size, stride, w, h, c, l.out_w, l.out_h, l.out_c);
     return l;
 }
@@ -71,16 +62,3 @@ void forward_maxpool_layer(const maxpool_layer l, network net)
         }
     }
 }
-
-void backward_maxpool_layer(const maxpool_layer l, network net)
-{
-    int i;
-    int h = l.out_h;
-    int w = l.out_w;
-    int c = l.c;
-    for(i = 0; i < h*w*c*l.batch; ++i){
-        int index = l.indexes[i];
-        net.delta[index] += l.delta[i];
-    }
-}
-

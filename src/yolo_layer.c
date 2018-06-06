@@ -2,7 +2,6 @@
 #include "activations.h"
 #include "blas.h"
 #include "box.h"
-#include "cuda.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -46,13 +45,6 @@ layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int 
     }
 
     l.forward = forward_yolo_layer;
-    l.backward = backward_yolo_layer;
-#ifdef GPU
-    l.forward_gpu = forward_yolo_layer_gpu;
-    l.backward_gpu = backward_yolo_layer_gpu;
-    l.output_gpu = cuda_make_array(l.output, batch*l.outputs);
-    l.delta_gpu = cuda_make_array(l.delta, batch*l.outputs);
-#endif
 
     fprintf(stderr, "yolo\n");
     srand(0);
@@ -114,7 +106,6 @@ void forward_yolo_layer(const layer l, network net)
     int i,j,b,t,n;
     memcpy(l.output, net.input, l.outputs*l.batch*sizeof(float));
 
-#ifndef GPU
     for (b = 0; b < l.batch; ++b){
         for(n = 0; n < l.n; ++n){
             int index = entry_index(l, b, n*l.w*l.h, 0);
@@ -123,14 +114,8 @@ void forward_yolo_layer(const layer l, network net)
             activate_array(l.output + index, (1+l.classes)*l.w*l.h, LOGISTIC);
         }
     }
-#endif
 
     memset(l.delta, 0, l.outputs * l.batch * sizeof(float));
-}
-
-void backward_yolo_layer(const layer l, network net)
-{
-   axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
 }
 
 void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth, int relative)
@@ -230,34 +215,3 @@ int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh,
     correct_yolo_boxes(dets, count, w, h, netw, neth, relative);
     return count;
 }
-
-#ifdef GPU
-
-void forward_yolo_layer_gpu(const layer l, network net)
-{
-    copy_gpu(l.batch*l.inputs, net.input_gpu, 1, l.output_gpu, 1);
-    int b, n;
-    for (b = 0; b < l.batch; ++b){
-        for(n = 0; n < l.n; ++n){
-            int index = entry_index(l, b, n*l.w*l.h, 0);
-            activate_array_gpu(l.output_gpu + index, 2*l.w*l.h, LOGISTIC);
-            index = entry_index(l, b, n*l.w*l.h, 4);
-            activate_array_gpu(l.output_gpu + index, (1+l.classes)*l.w*l.h, LOGISTIC);
-        }
-    }
-    if(!net.train || l.onlyforward){
-        cuda_pull_array(l.output_gpu, l.output, l.batch*l.outputs);
-        return;
-    }
-
-    cuda_pull_array(l.output_gpu, net.input, l.batch*l.inputs);
-    forward_yolo_layer(l, net);
-    cuda_push_array(l.delta_gpu, l.delta, l.batch*l.outputs);
-}
-
-void backward_yolo_layer_gpu(const layer l, network net)
-{
-    axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);
-}
-#endif
-

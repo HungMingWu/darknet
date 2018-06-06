@@ -1,7 +1,6 @@
 #include "image.h"
 #include "utils.h"
 #include "blas.h"
-#include "cuda.h"
 #include <stdio.h>
 #include <math.h>
 

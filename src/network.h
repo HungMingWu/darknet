@@ -9,10 +9,6 @@
 #include "tree.h"
 
 
-#ifdef GPU
-void pull_network_output(network *net);
-#endif
-
 char *get_layer_string(LAYER_TYPE a);
 
 network *make_network(int n);

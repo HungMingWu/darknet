@@ -670,7 +670,7 @@ void run_detector(int argc, char **argv)
             gpu_list = strchr(gpu_list, ',')+1;
         }
     } else {
-        gpu = gpu_index;
+        gpu = -1;
         gpus = &gpu;
         ngpus = 1;
     }

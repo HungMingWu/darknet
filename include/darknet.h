@@ -6,19 +6,6 @@
 #include <pthread.h>
 
 #define SECRET_NUM -1234
-extern int gpu_index;
-
-#ifdef GPU
-    #define BLOCK 512
-
-    #include "cuda_runtime.h"
-    #include "curand.h"
-    #include "cublas_v2.h"
-
-    #ifdef CUDNN
-    #include "cudnn.h"
-    #endif
-#endif
 
 #ifndef __cplusplus
     #ifdef OPENCV
@@ -63,33 +50,14 @@ typedef enum{
 
 typedef enum {
     CONVOLUTIONAL,
-    DECONVOLUTIONAL,
-    CONNECTED,
     MAXPOOL,
-    SOFTMAX,
-    DETECTION,
-    DROPOUT,
-    CROP,
     ROUTE,
-    COST,
-    NORMALIZATION,
-    AVGPOOL,
-    LOCAL,
     SHORTCUT,
-    ACTIVE,
-    RNN,
-    GRU,
-    LSTM,
-    CRNN,
     BATCHNORM,
     NETWORK,
     XNOR,
-    REGION,
     YOLO,
-    REORG,
     UPSAMPLE,
-    LOGXENT,
-    L2NORM,
     BLANK
 } LAYER_TYPE;
 
@@ -330,94 +298,6 @@ struct layer{
 
     size_t workspace_size;
 
-#ifdef GPU
-    int *indexes_gpu;
-
-    float *z_gpu;
-    float *r_gpu;
-    float *h_gpu;
-
-    float *temp_gpu;
-    float *temp2_gpu;
-    float *temp3_gpu;
-
-    float *dh_gpu;
-    float *hh_gpu;
-    float *prev_cell_gpu;
-    float *cell_gpu;
-    float *f_gpu;
-    float *i_gpu;
-    float *g_gpu;
-    float *o_gpu;
-    float *c_gpu;
-    float *dc_gpu; 
-
-    float *m_gpu;
-    float *v_gpu;
-    float *bias_m_gpu;
-    float *scale_m_gpu;
-    float *bias_v_gpu;
-    float *scale_v_gpu;
-
-    float * combine_gpu;
-    float * combine_delta_gpu;
-
-    float * prev_state_gpu;
-    float * forgot_state_gpu;
-    float * forgot_delta_gpu;
-    float * state_gpu;
-    float * state_delta_gpu;
-    float * gate_gpu;
-    float * gate_delta_gpu;
-    float * save_gpu;
-    float * save_delta_gpu;
-    float * concat_gpu;
-    float * concat_delta_gpu;
-
-    float * binary_input_gpu;
-    float * binary_weights_gpu;
-
-    float * mean_gpu;
-    float * variance_gpu;
-
-    float * rolling_mean_gpu;
-    float * rolling_variance_gpu;
-
-    float * variance_delta_gpu;
-    float * mean_delta_gpu;
-
-    float * x_gpu;
-    float * x_norm_gpu;
-    float * weights_gpu;
-    float * weight_updates_gpu;
-    float * weight_change_gpu;
-
-    float * biases_gpu;
-    float * bias_updates_gpu;
-    float * bias_change_gpu;
-
-    float * scales_gpu;
-    float * scale_updates_gpu;
-    float * scale_change_gpu;
-
-    float * output_gpu;
-    float * loss_gpu;
-    float * delta_gpu;
-    float * rand_gpu;
-    float * squared_gpu;
-    float * norms_gpu;
-#ifdef CUDNN
-    cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
-    cudnnTensorDescriptor_t dsrcTensorDesc, ddstTensorDesc;
-    cudnnTensorDescriptor_t normTensorDesc;
-    cudnnFilterDescriptor_t weightDesc;
-    cudnnFilterDescriptor_t dweightDesc;
-    cudnnConvolutionDescriptor_t convDesc;
-    cudnnConvolutionFwdAlgo_t fw_algo;
-    cudnnConvolutionBwdDataAlgo_t bd_algo;
-    cudnnConvolutionBwdFilterAlgo_t bf_algo;
-#endif
-#endif
 };
 
 void free_layer(layer);
@@ -473,7 +353,6 @@ typedef struct network{
     float hue;
     int random;
 
-    int gpu_index;
     tree *hierarchy;
 
     float *input;
@@ -483,13 +362,6 @@ typedef struct network{
     int index;
     float *cost;
     float clip;
-
-#ifdef GPU
-    float *input_gpu;
-    float *truth_gpu;
-    float *delta_gpu;
-    float *output_gpu;
-#endif
 
 } network;
 
@@ -619,23 +491,6 @@ void normalize_cpu(float *x, float *mean, float *variance, int batch, int filter
 void softmax(float *input, int n, float temp, int stride, float *output);
 
 int best_3d_shift_r(image a, image b, int min, int max);
-#ifdef GPU
-void axpy_gpu(int N, float ALPHA, float * X, int INCX, float * Y, int INCY);
-void fill_gpu(int N, float ALPHA, float * X, int INCX);
-void scal_gpu(int N, float ALPHA, float * X, int INCX);
-void copy_gpu(int N, float * X, int INCX, float * Y, int INCY);
-
-void cuda_set_device(int n);
-void cuda_free(float *x_gpu);
-float *cuda_make_array(float *x, size_t n);
-void cuda_pull_array(float *x_gpu, float *x, size_t n);
-float cuda_mag_array(float *x_gpu, size_t n);
-void cuda_push_array(float *x_gpu, float *x, size_t n);
-
-void forward_network_gpu(network *net);
-
-void sync_nets(network **nets, int n, int interval);
-#endif
 image get_label(image **characters, char *string, int size);
 void draw_label(image a, int r, int c, image label, const float *rgb);
 void save_image_png(image im, const char *name);
